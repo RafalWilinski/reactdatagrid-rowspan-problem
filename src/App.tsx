@@ -2,42 +2,74 @@ import React from "react";
 import ReactDataGrid from "@inovua/reactdatagrid-community";
 import "@inovua/reactdatagrid-community/index.css";
 
+import people from "./people";
+
 const columns = [
-  { name: "name", header: "Name", minWidth: 50, defaultFlex: 2 },
-  { name: "age", header: "Age", maxWidth: 1000, defaultFlex: 1 },
+  {
+    name: "id",
+    defaultWidth: 60,
+    header: "Id",
+    type: "number",
+    colspan: ({ data, column, columns }: any) => {
+      // make every other row cell expand for 2 columns if the next column is the age column
+      if (
+        data.id % 2 &&
+        columns[column.computedVisibleIndex] &&
+        columns[column.computedVisibleIndex + 1].name === "age"
+      ) {
+        return 2;
+      }
+
+      return 1;
+    },
+  },
+  { name: "age", header: "Age", defaultFlex: 1, type: "number" },
+  { name: "name", defaultFlex: 1 },
+  {
+    name: "country",
+    header: "Country",
+    defaultFlex: 1,
+    rowspan: ({ value, dataSourceArray, rowIndex, column }: any) => {
+      let rowspan = 1;
+
+      const prevData = dataSourceArray[rowIndex - 1];
+      if (prevData && prevData[column.name] === value) {
+        return rowspan;
+      }
+      let currentRowIndex = rowIndex + 1;
+      while (
+        dataSourceArray[currentRowIndex] &&
+        dataSourceArray[currentRowIndex][column.name] === value
+      ) {
+        rowspan++;
+        currentRowIndex++;
+        if (rowspan > 9) {
+          break;
+        }
+      }
+      return rowspan;
+    },
+  },
 ];
+
+const App = () => {
+  return (
+    <div>
+      <h3>Rowspan and colspan example</h3>
+      <p>
+        Try and sort the <b>COUNTRY</b> column to see the cells with same
+        country spanning together.
+      </p>
+      <ReactDataGrid
+        showZebraRows={false}
+        style={gridStyle}
+        columns={columns}
+        dataSource={people}
+      />
+    </div>
+  );
+};
 
 const gridStyle = { minHeight: 550 };
-
-const dataSource = [
-  { id: 1, name: "John McQueen", age: 35 },
-  { id: 2, name: "Mary Stones", age: 25 },
-  { id: 3, name: "Robert Fil", age: 27 },
-  { id: 4, name: "Roger Robson", age: 81 },
-  { id: 5, name: "Billary Konwik", age: 18 },
-  { id: 6, name: "Bob Martin", age: 18 },
-  { id: 7, name: "Matthew Richardson", age: 54 },
-  { id: 8, name: "Ritchie Peterson", age: 54 },
-  { id: 9, name: "Bryan Martin", age: 40 },
-  { id: 10, name: "Mark Martin", age: 44 },
-  { id: 11, name: "Michelle Sebastian", age: 24 },
-  { id: 12, name: "Michelle Sullivan", age: 61 },
-  { id: 13, name: "Jordan Bike", age: 16 },
-  { id: 14, name: "Nelson Ford", age: 34 },
-  { id: 15, name: "Tim Cheap", age: 3 },
-  { id: 16, name: "Robert Carlson", age: 31 },
-  { id: 17, name: "Johny Perterson", age: 40 },
-];
-
-function App() {
-  return (
-    <ReactDataGrid
-      idProperty="id"
-      columns={columns}
-      dataSource={dataSource}
-      style={gridStyle}
-    />
-  );
-}
 
 export default App;
